@@ -55,6 +55,19 @@ Adatbázis-séma módosítása: `apps/api/src/db/schema.ts`, majd `pnpm db:gener
 A szerver Node 20.2-n is fut (ezt a CI minden változásnál ellenőrzi). A buildhez
 (Vite) Node 22 kell, ezért a build a fejlesztőgépen vagy a CI-ban készül.
 
+## Offline működés
+
+- Minden rögzítés előbb a készüléken (IndexedDB) kerül egy kimenő sorba, saját UUID-vel,
+  és a `SyncEngine` (`apps/web/src/offline/sync.ts`) sorrendben küldi fel a `POST /api/sync`-re.
+- A szerver a művelet azonosítója alapján felismeri az ismételt beküldést (`sync_op` tábla),
+  így elveszett válasz esetén sem rögzít semmit kétszer.
+- Új művelettípus: kezelő az `apps/api/src/sync/handlers.ts`-be; ugyanazt az üzleti
+  logikát hívja, mint a közvetlen API-végpont.
+- A törzsadat (`GET /api/bootstrap`) bejelentkezéskor és óránként letöltődik a készülékre.
+- Kijelentkezéskor és 7 nap inaktivitás után a helyi adat törlődik; feltöltetlen rögzítés
+  esetén a kilépés előtt figyelmeztet. Offline indulásnál a legutóbbi bejelentkezés
+  legfeljebb 12 óráig használható.
+
 ## Biztonsági alapelvek
 
 - Jelszó: scrypt (Node beépített, natív függőség nélkül), legalább 10 karakter, betű és szám.

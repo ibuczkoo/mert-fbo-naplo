@@ -1,4 +1,4 @@
-import type { Role } from "@fbo/shared";
+import type { MasterDataKind, MasterDataRecord, Role } from "@fbo/shared";
 
 export interface UserRecord {
   id: string;
@@ -10,14 +10,14 @@ export interface UserRecord {
   active: boolean;
 }
 
-export interface EmployeeRecord {
+export interface SiteRecord {
   id: string;
-  siteId: string;
-  fullName: string;
-  badgeNumber: string | null;
-  active: boolean;
-  createdAt: Date;
+  name: string;
+  timezone: string;
+  settings: unknown;
 }
+
+export type StoredMasterData<K extends MasterDataKind> = MasterDataRecord<K> & { siteId: string };
 
 export interface SessionRecord {
   tokenHash: string;
@@ -36,11 +36,21 @@ export interface AuditEntry {
   after?: unknown;
 }
 
+export interface SyncOpRecord {
+  id: string;
+  userId: string;
+  receivedAt: Date;
+  result: unknown;
+}
+
 /**
  * Az adatelérés egyetlen felülete. Éles üzemben SQL (MariaDB / később PostgreSQL),
  * tesztekben memóriabeli megvalósítás – így az üzleti logika adatbázis nélkül is tesztelhető.
  */
 export interface Store {
+  sites: {
+    findById(id: string): Promise<SiteRecord | null>;
+  };
   users: {
     findByUsername(username: string): Promise<UserRecord | null>;
     findById(id: string): Promise<UserRecord | null>;
@@ -53,16 +63,20 @@ export interface Store {
     delete(tokenHash: string): Promise<void>;
     deleteExpired(now: Date): Promise<number>;
   };
-  employees: {
-    list(siteId: string, opts?: { includeInactive?: boolean }): Promise<EmployeeRecord[]>;
-    findById(id: string): Promise<EmployeeRecord | null>;
-    findByBadge(siteId: string, badge: string): Promise<EmployeeRecord | null>;
-    create(e: EmployeeRecord): Promise<void>;
+  masterData: {
+    list<K extends MasterDataKind>(kind: K, siteId: string, opts?: { includeInactive?: boolean }): Promise<StoredMasterData<K>[]>;
+    findById<K extends MasterDataKind>(kind: K, id: string): Promise<StoredMasterData<K> | null>;
+    create<K extends MasterDataKind>(kind: K, rec: StoredMasterData<K>): Promise<void>;
+    update<K extends MasterDataKind>(kind: K, id: string, patch: Partial<MasterDataRecord<K>>): Promise<void>;
   };
   audit: {
     append(entry: AuditEntry & { id: string; at: Date }): Promise<void>;
   };
-  /** Több írás egy tranzakcióban (pl. rekord + audit). */
+  syncOps: {
+    find(opId: string): Promise<SyncOpRecord | null>;
+    record(op: SyncOpRecord): Promise<void>;
+  };
+  /** Több írás egy tranzakcióban (pl. rekord + audit + szinkron-nyugta). */
   transaction<T>(fn: (tx: Store) => Promise<T>): Promise<T>;
   close(): Promise<void>;
 }

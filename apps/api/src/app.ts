@@ -8,7 +8,9 @@ import { ZodError, type ZodType } from "zod";
 import { can, type Action, type SessionUser } from "@fbo/shared";
 import { getDummyHash, verifyPassword } from "./auth/password.js";
 import { createLoginLimiter, type LoginLimiter } from "./auth/rate-limit.js";
-import { employeeRoutes } from "./routes/employees.js";
+import { HttpError } from "./errors.js";
+import { masterDataRoutes } from "./routes/masterdata.js";
+import { syncRoutes } from "./routes/sync.js";
 import { authRoutes } from "./routes/auth.js";
 import type { AuditEntry, Store, UserRecord } from "./store/types.js";
 
@@ -49,15 +51,7 @@ export interface AppContext {
   verifyLogin(username: string, password: string): Promise<UserRecord | null>;
 }
 
-export class HttpError extends Error {
-  constructor(
-    public statusCode: number,
-    message: string,
-    public details?: unknown,
-  ) {
-    super(message);
-  }
-}
+export { HttpError };
 
 export const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 
@@ -141,7 +135,7 @@ export async function buildApp(opts: AppOptions) {
     if (!s || s.expiresAt <= now()) return;
     const u = await store.users.findById(s.userId);
     if (!u || !u.active) return;
-    const emp = u.employeeId ? await store.employees.findById(u.employeeId) : null;
+    const emp = u.employeeId ? await store.masterData.findById("employee", u.employeeId) : null;
     req.user = {
       id: u.id,
       siteId: u.siteId,
@@ -167,7 +161,8 @@ export async function buildApp(opts: AppOptions) {
 
   app.get("/api/health", async () => ({ status: "ok", time: now().toISOString() }));
   await app.register(authRoutes, { prefix: "/api/auth" });
-  await app.register(employeeRoutes, { prefix: "/api/employees" });
+  await app.register(masterDataRoutes, { prefix: "/api" });
+  await app.register(syncRoutes, { prefix: "/api" });
 
   // A lefordított PWA kiszolgálása ugyanabból a folyamatból (egy Node-alkalmazás a cPanelen).
   if (opts.webDistDir && existsSync(opts.webDistDir)) {

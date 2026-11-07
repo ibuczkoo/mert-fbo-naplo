@@ -25,7 +25,7 @@ export async function authRoutes(app: FastifyInstance) {
       action: "login",
       after: { ip: req.ip },
     });
-    const emp = user.employeeId ? await ctx.store.employees.findById(user.employeeId) : null;
+    const emp = user.employeeId ? await ctx.store.masterData.findById("employee", user.employeeId) : null;
     return {
       id: user.id,
       username: user.username,

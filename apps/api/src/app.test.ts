@@ -1,30 +1,5 @@
-import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { Role } from "@fbo/shared";
-import { SESSION_COOKIE, buildApp } from "./app.js";
-import { hashPassword } from "./auth/password.js";
-import { createMemoryStore } from "./store/memory.js";
-
-const SITE = randomUUID();
-const PASSWORD = "Titkos-jelszo-123";
-
-async function setup() {
-  const store = createMemoryStore();
-  let clock = new Date("2026-11-07T10:00:00Z");
-  const app = await buildApp({ store, sessionHours: 12, secureCookies: true, now: () => clock });
-  const hash = await hashPassword(PASSWORD);
-  const mkUser = async (username: string, role: Role) => {
-    const id = randomUUID();
-    await store.users.create({ id, siteId: SITE, username, passwordHash: hash, role, employeeId: null, active: true });
-    return id;
-  };
-  const login = async (username: string, password = PASSWORD) => {
-    const res = await app.inject({ method: "POST", url: "/api/auth/login", payload: { username, password } });
-    const c = res.cookies.find((x) => x.name === SESSION_COOKIE);
-    return { res, cookie: c ? { [SESSION_COOKIE]: c.value } : undefined, raw: c };
-  };
-  return { app, store, mkUser, login, advance: (ms: number) => (clock = new Date(clock.getTime() + ms)) };
-}
+import { setup } from "./test/helpers.js";
 
 describe("API alapok", () => {
   let t: Awaited<ReturnType<typeof setup>>;
