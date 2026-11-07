@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.6
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: fbo
+          MARIADB_USER: fbo
+          MARIADB_PASSWORD: fbo-ci
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DATABASE_URL: mysql://fbo:fbo-ci@127.0.0.1:3306/fbo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm test
+      - name: Adatbázis-migráció MariaDB-n
+        run: pnpm --filter @fbo/api db:migrate
+      - name: Első felhasználó létrehozása
+        run: node apps/api/dist/cli/create-user.js --username ci.admin --role admin
+        env:
+          FBO_NEW_PASSWORD: Ci-teszt-jelszo-2026
+      - name: Indítás a tárhely Node-verzióján (20.2)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.2.0
+      - name: Füstteszt Node 20.2 alatt
+        env:
+          PORT: "3999"
+          WEB_DIST_DIR: apps/web/dist
+        run: |
+          node apps/api/dist/server.js > server.log 2>&1 &
+          for i in $(seq 1 20); do curl -sf http://127.0.0.1:3999/api/health && break; sleep 1; done
+          curl -sf -c c.txt -H 'content-type: application/json' \
+            -d '{"username":"ci.admin","password":"Ci-teszt-jelszo-2026"}' http://127.0.0.1:3999/api/auth/login
+          curl -sf -b c.txt http://127.0.0.1:3999/api/auth/me
+          curl -sf http://127.0.0.1:3999/ | grep -q "MERT FBŐ napló"
+          kill %1 || true
+          cat server.log | tail -20
