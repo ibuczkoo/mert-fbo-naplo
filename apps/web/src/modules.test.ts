@@ -9,9 +9,10 @@ describe("menü szerepkör szerint", () => {
 
   it("a parancsnok mindent lát", () => {
     expect(modulesFor("parancsnok")).toHaveLength(8);
+    expect(modulesFor("parancsnok").map((m) => m.key)).not.toContain("users");
   });
 
-  it("az admin csak a megtekintést, az archívumot és a törzsadatot", () => {
-    expect(modulesFor("admin").map((m) => m.key)).toEqual(["shift", "archive", "masterdata"]);
+  it("az admin: megtekintés, archívum, törzsadat, felhasználók", () => {
+    expect(modulesFor("admin").map((m) => m.key)).toEqual(["shift", "archive", "masterdata", "users"]);
   });
 });

@@ -11,6 +11,7 @@ import { createLoginLimiter, type LoginLimiter } from "./auth/rate-limit.js";
 import { HttpError } from "./errors.js";
 import { masterDataRoutes } from "./routes/masterdata.js";
 import { syncRoutes } from "./routes/sync.js";
+import { userRoutes } from "./routes/users.js";
 import { authRoutes } from "./routes/auth.js";
 import type { AuditEntry, Store, UserRecord } from "./store/types.js";
 
@@ -163,6 +164,7 @@ export async function buildApp(opts: AppOptions) {
   await app.register(authRoutes, { prefix: "/api/auth" });
   await app.register(masterDataRoutes, { prefix: "/api" });
   await app.register(syncRoutes, { prefix: "/api" });
+  await app.register(userRoutes, { prefix: "/api/users" });
 
   // A lefordított PWA kiszolgálása ugyanabból a folyamatból (egy Node-alkalmazás a cPanelen).
   if (opts.webDistDir && existsSync(opts.webDistDir)) {

@@ -9,6 +9,7 @@ import { useAutoBootstrap } from "./offline/hooks";
 import { startAutoSync, syncEngine } from "./offline/sync";
 import { Home, Shell } from "./Shell";
 import { useHashRoute } from "./useHashRoute";
+import { UsersPage } from "./users/UsersPage";
 
 const ME_KEY = ["me"];
 const LAST_USER = "fbo.lastUser";
@@ -91,6 +92,8 @@ export function App() {
   let page = <Home user={user} />;
   if (route[0] === "torzsadatok" && can(user.role, "masterData.manage")) {
     page = <MasterDataPage kindPath={route[1]} />;
+  } else if (route[0] === "felhasznalok" && can(user.role, "users.manage")) {
+    page = <UsersPage selfId={user.id} />;
   }
 
   return (

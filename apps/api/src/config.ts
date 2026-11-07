@@ -21,6 +21,16 @@ const envSchema = z.object({
     .enum(["true", "false"])
     .default("true")
     .transform((v) => v === "true"),
+  /** Induláskor lefuttatja a hiányzó adatbázis-migrációkat (terminál nélküli telepítéshez). */
+  AUTO_MIGRATE: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((v) => v === "true"),
+  MIGRATIONS_DIR: z.string().optional(),
+  SITE_NAME: z.string().default("MERT"),
+  /** Csak az első induláshoz: ha még nincs felhasználó, ezzel jön létre az első admin. Utána törölhető. */
+  INITIAL_ADMIN_USERNAME: z.string().trim().min(3).optional(),
+  INITIAL_ADMIN_PASSWORD: z.string().optional(),
 });
 
 export type Config = z.infer<typeof envSchema>;

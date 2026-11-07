@@ -44,7 +44,7 @@ export function Shell({ user, onLogout, children }: { user: SessionUser; onLogou
   );
 }
 
-const ROUTES: Record<string, string> = { masterdata: "torzsadatok" };
+const ROUTES: Record<string, string> = { masterdata: "torzsadatok", users: "felhasznalok" };
 
 export function Home({ user }: { user: SessionUser }) {
   const modules = modulesFor(user.role);

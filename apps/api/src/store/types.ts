@@ -55,12 +55,15 @@ export interface Store {
     findByUsername(username: string): Promise<UserRecord | null>;
     findById(id: string): Promise<UserRecord | null>;
     create(user: UserRecord): Promise<void>;
+    list(siteId: string): Promise<UserRecord[]>;
+    update(id: string, patch: Partial<Pick<UserRecord, "role" | "active" | "passwordHash" | "employeeId">>): Promise<void>;
   };
   sessions: {
     create(s: SessionRecord): Promise<void>;
     find(tokenHash: string): Promise<SessionRecord | null>;
     extend(tokenHash: string, expiresAt: Date): Promise<void>;
     delete(tokenHash: string): Promise<void>;
+    deleteForUser(userId: string): Promise<void>;
     deleteExpired(now: Date): Promise<number>;
   };
   masterData: {

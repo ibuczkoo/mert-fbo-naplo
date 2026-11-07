@@ -18,6 +18,7 @@ export const MODULES: ModuleEntry[] = [
   { key: "gate", title: "Kapu nyitás-zárás", description: "Nyitott kapuk, nyitás és zárás rögzítése", requires: "gate.record", phase: 3 },
   { key: "archive", title: "Archívum", description: "Régi bejegyzések keresése és PDF-jei", requires: "archive.read", phase: 4 },
   { key: "masterdata", title: "Törzsadatok", description: "Dolgozók, eszközök, fegyverek, kapuk", requires: "masterData.manage", phase: 0 },
+  { key: "users", title: "Felhasználók", description: "Belépési fiókok, szerepkörök, jelszavak", requires: "users.manage", phase: 0 },
 ];
 
 export function modulesFor(role: Role): ModuleEntry[] {

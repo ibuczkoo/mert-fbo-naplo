@@ -1,4 +1,4 @@
-import { and, eq, lte, sql } from "drizzle-orm";
+import { and, asc, eq, lte, sql } from "drizzle-orm";
 import { drizzle, type MySql2Database } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import type { MasterDataKind } from "@fbo/shared";
@@ -47,6 +47,17 @@ function build(db: Db, pool: mysql.Pool | null): Store {
       async create(user) {
         await db.insert(schema.userAccount).values({ ...user, createdAt: new Date() });
       },
+      async list(siteId) {
+        return db
+          .select()
+          .from(schema.userAccount)
+          .where(eq(schema.userAccount.siteId, siteId))
+          .orderBy(asc(schema.userAccount.username));
+      },
+      async update(id, patch) {
+        if (Object.keys(patch).length === 0) return;
+        await db.update(schema.userAccount).set(patch).where(eq(schema.userAccount.id, id));
+      },
     },
     sessions: {
       async create(s) {
@@ -62,6 +73,9 @@ function build(db: Db, pool: mysql.Pool | null): Store {
       },
       async delete(tokenHash) {
         await db.delete(schema.session).where(eq(schema.session.tokenHash, tokenHash));
+      },
+      async deleteForUser(userId) {
+        await db.delete(schema.session).where(eq(schema.session.userId, userId));
       },
       async deleteExpired(now) {
         const [res] = await db.delete(schema.session).where(lte(schema.session.expiresAt, now));

@@ -34,6 +34,13 @@ export function createMemoryStore() {
       async create(user) {
         users.set(user.id, { ...user });
       },
+      async list(siteId) {
+        return [...users.values()].filter((u) => u.siteId === siteId).sort((a, b) => a.username.localeCompare(b.username, "hu"));
+      },
+      async update(id, patch) {
+        const u = users.get(id);
+        if (u) users.set(id, { ...u, ...patch });
+      },
     },
     sessions: {
       async create(s) {
@@ -48,6 +55,9 @@ export function createMemoryStore() {
       },
       async delete(h) {
         sessions.delete(h);
+      },
+      async deleteForUser(userId) {
+        for (const [k, s] of sessions) if (s.userId === userId) sessions.delete(k);
       },
       async deleteExpired(now) {
         let n = 0;

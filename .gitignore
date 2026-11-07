@@ -7,3 +7,4 @@ coverage/
 storage/
 *.log
 .DS_Store
+dist-cpanel/

@@ -13,6 +13,10 @@
     "dev:api": "pnpm --filter @fbo/api dev",
     "dev:web": "pnpm --filter @fbo/web dev",
     "db:generate": "pnpm --filter @fbo/api db:generate",
-    "db:migrate": "pnpm --filter @fbo/api db:migrate"
+    "db:migrate": "pnpm --filter @fbo/api db:migrate",
+    "bundle:cpanel": "pnpm build && node scripts/bundle-cpanel.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }

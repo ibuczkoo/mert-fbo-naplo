@@ -32,6 +32,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm test
+      - name: cPanel-telepítőcsomag
+        run: node scripts/bundle-cpanel.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cpanel-csomag
+          path: dist-cpanel/*.zip
       - name: Adatbázis-migráció MariaDB-n
         run: pnpm --filter @fbo/api db:migrate
       - name: Első felhasználó létrehozása
@@ -42,12 +48,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.2.0
-      - name: Füstteszt Node 20.2 alatt
+      - name: Füstteszt a telepítőcsomaggal, Node 20.2 alatt (üres adatbázis)
         env:
           PORT: "3999"
-          WEB_DIST_DIR: apps/web/dist
+          DATABASE_URL: mysql://root:root@127.0.0.1:3306/fbo_csomag
+          INITIAL_ADMIN_USERNAME: ci.admin
+          INITIAL_ADMIN_PASSWORD: Ci-teszt-jelszo-2026
         run: |
-          node apps/api/dist/server.js > server.log 2>&1 &
+          mysql -h127.0.0.1 -uroot -proot -e "CREATE DATABASE fbo_csomag CHARACTER SET utf8mb4"
+          node dist-cpanel/app/app.cjs > server.log 2>&1 &
           for i in $(seq 1 20); do curl -sf http://127.0.0.1:3999/api/health && break; sleep 1; done
           curl -sf -c c.txt -H 'content-type: application/json' \
             -d '{"username":"ci.admin","password":"Ci-teszt-jelszo-2026"}' http://127.0.0.1:3999/api/auth/login
